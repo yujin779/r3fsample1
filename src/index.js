@@ -46,6 +46,8 @@ function Swarm({ count, mouse }) {
 
   return (
     <>
+      {/* 同一のGeometryとMaterialを使用してたくさん描画させるなら
+      instancedMeshを使ったほうがエコらしい。 */}
       <instancedMesh ref={mesh} args={[null, null, count]}>
         <sphereBufferGeometry attach="geometry" args={[1, 32, 32]} />
         <meshPhongMaterial attach="material" color="white" />
@@ -54,26 +56,43 @@ function Swarm({ count, mouse }) {
   )
 }
 
+/**
+ * 1.プログラムのスタート地点
+ */
 function App() {
+  // マウスの位置を格納する
   const mouse = useRef([0, 0])
-  const onMouseMove = useCallback(({ clientX: x, clientY: y }) => (mouse.current = [x - window.innerWidth / 2, y - window.innerHeight / 2]), [])
+  // マウスを動かすごとにcanvasの中心からの座標をmouseに格納
+  const onMouseMove = useCallback(({ clientX: x, clientY: y }) => {
+    mouse.current = [x - window.innerWidth / 2, y - window.innerHeight / 2]
+  }, [])
   return (
+    /** 描画するcanvasの外側のブロックに、範囲内にてマウスを動かしたときに
+     *  すぐ上にあるonMouseMoveを実行するようにしている。
+     */
     <div style={{ width: '100%', height: '100%' }} onMouseMove={onMouseMove}>
       <Canvas
         gl={{ alpha: false, antialias: false, logarithmicDepthBuffer: true }}
         camera={{ fov: 75, position: [0, 0, 70] }}
         onCreated={({ gl }) => {
+          // 背景色
           gl.setClearColor('white')
+          /** https://threejs.org/examples/webgl_tonemapping.html
+           *  描画のコントラストを設定するっぽい？
+           */
           gl.toneMapping = THREE.ACESFilmicToneMapping
+          // srgbフォーマットのフレームバッファを使う...正直良くわかってない。
           gl.outputEncoding = THREE.sRGBEncoding
         }}>
         <ambientLight intensity={1} />
         <pointLight position={[100, 100, 100]} intensity={2.2} />
         <pointLight position={[-100, -100, -100]} intensity={5} color="red" />
+        {/* ファイル上部にある function Swarm({ count, mouse }) */}
         <Swarm mouse={mouse} count={150} />
-        <Suspense fallback={null}>
+        {/* Suspense = Reactの機能 実行できる状態になったら実行する */}
+        {/* <Suspense fallback={null}>
           <Effects />
-        </Suspense>
+        </Suspense> */}
       </Canvas>
     </div>
   )
